@@ -29,3 +29,18 @@ def user_selection():
         except ValueError:
             print("Please enter values between 0 and 9!")
     return create_grid(coordinates)
+
+# computer selection
+from random import randrange
+def computer_selection():
+    coordinates = []
+    number_ships_max = 20
+    number_ships_used = 0
+    while number_ships_used <= number_ships_max:
+            selection_x = randrange(0,9)
+            selection_y = randrange(0,9)
+            selected_position = (selection_x, selection_y)
+            if selected_position not in coordinates:
+                coordinates.append((selection_x, selection_y))
+                number_ships_used += 1
+    return create_grid(coordinates)
