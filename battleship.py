@@ -44,3 +44,12 @@ def computer_selection():
                 coordinates.append((selection_x, selection_y))
                 number_ships_used += 1
     return create_grid(coordinates)
+
+# moving
+def moving(coordinates_opponent, move_x, move_y):
+    move_position = (move_x, move_y)
+    if move_position in coordinates_opponent:
+        coordinates_opponent.remove(move_position)
+        print("Ship destroyed!")
+    elif move_position not in coordinates_opponent:
+        print("You missed the target.")
