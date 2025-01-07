@@ -22,10 +22,8 @@ def create_grid(coordinates: list, print_grid):
 
 # valid position check
 def valid_position(positions, grid_size=10):
-    for x, y in positions:
-        if not (0 <= x < grid_size and 0 <= y < grid_size):
-            return False
-    return True
+    x, y = positions
+    return 0 <= x < grid_size and 0 <= y < grid_size
 
 # player selection
 def player_selection():
@@ -34,10 +32,10 @@ def player_selection():
     number_ships_used = 0
     while number_ships_used <= number_ships_max:
         try:
-            selection_x = int(input("Position x: (0-9):"))
+            selection_x = int(input("Create your ship:\nPosition x: (0-9):"))
             selection_y = int(input("Position y: (0-9):"))
             selected_position = (selection_x, selection_y)
-            if not valid_position:
+            if not valid_position(selected_position):
                 print("Position outside if the grid. Please enter values between 0 and 9!")
             elif selected_position not in coordinates:
                 coordinates.append((selection_x, selection_y))
@@ -83,7 +81,8 @@ def gaming():
         try:
             selection_x_player = int(input("Position x: (0-9):"))
             selection_y_player = int(input("Position y: (0-9):"))
-            if not valid_position:
+            selected_position = (selection_x_player, selection_y_player)
+            if not valid_position():
                 print("Position outside if the grid. Please enter values between 0 and 9!")
             elif moving(ships_positions_computer, selection_x_player, selection_y_player) == True:
                 number_ships_computer -= 1
