@@ -20,29 +20,29 @@ def create_grid(coordinates: list, print_grid):
             print("".join(row))
     return grid
 
-# valid position check
-def valid_position(positions, coordinates, grid_size=10):
-    x, y = positions
-    if x >= 10 or y >= 10:
-       print("Position outside if the grid. Please enter values between 0 and 9!")
-       return False
-    elif positions in coordinates:
-        return False
-    else:
-        return True
-
-# create a ship
-def create_ship(size, start_x, start_y, direction, coordinates, grid_size=10):
-    positions = []
-    for i in range(size):
-        if direction == 'horizontal':
-            positions.append((start_x, start_y + i))
-        else:  # vertical
-            positions.append((start_x + i, start_y))
-    if all(0 <= x < grid_size and 0 <= y < grid_size for x, y in positions) and not any(pos in coordinates for pos in positions):
+# ship class
+class Ship:
+    def __init__(self, size, start_x, start_y, direction):
+        self.size = size
+        self.start_x = start_x
+        self.start_y = start_y
+        self.direction = direction
+        self.positions = self.calculate_position()
+    def calculate_position(self):
+        positions = []
+        for i in range(self.size):
+            if self.direction == 'horizontal':
+                positions.append((self.start_x, self.start_y + i))
+            elif self.direction == 'vertical':
+                positions.append((self.start_x + i, self.start_y))
         return positions
-    else:
-        return None
+    def valid_position(self, coordinates, grid_size=10):
+        for x, y in self.positions:
+            if not (0 <= x < grid_size and 0 <= y < grid_size):
+                return False
+            if (x, y) in coordinates:
+                return False
+        return True    
         
 # player selection
 def player_selection(grid_size = 10):
@@ -60,9 +60,9 @@ def player_selection(grid_size = 10):
                 if direction not in ["horizontal", "vertical"]:
                     print("Invalid direction. Please enter 'horizontal' or 'vertical'.")
                     continue
-                ship_positions = create_ship(size, start_x, start_y, direction, coordinates, grid_size)
-                if ship_positions:
-                    coordinates.extend(ship_positions)
+                ship = Ship(size, start_x, start_y, direction)
+                if ship.valid_position(coordinates, grid_size):
+                    coordinates.extend(ship.positions)
                     create_grid(coordinates, True)
                     break
                 else:
@@ -107,7 +107,7 @@ def gaming():
             selection_x_player = int(input("Position x: (0-9): "))
             selection_y_player = int(input("Position y: (0-9): "))
             selected_position = (selection_x_player, selection_y_player)
-            if not valid_position():
+            if not valid_position(selected_position):
                 print("Position outside if the grid. Please enter values between 0 and 9!")
             elif moving(ships_positions_computer, selection_x_player, selection_y_player) == True:
                 number_ships_computer -= 1
