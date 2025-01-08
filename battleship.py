@@ -28,6 +28,7 @@ class Ship:
         self.start_y = start_y
         self.direction = direction
         self.positions = self.calculate_position()
+        self.hits = []
     def calculate_position(self):
         positions = []
         for i in range(self.size):
@@ -42,10 +43,18 @@ class Ship:
                 return False
             if (x, y) in coordinates:
                 return False
-        return True    
+        return True
+    def hit(self, position):
+        if position in self.positions and position not in self.hits:
+            self.hits.append(position)
+            return True
+        return False
+    def sink(self):
+        return len(self.hits) == len(self.positions)
         
 # player selection
 def player_selection(grid_size = 10):
+    ships = []
     coordinates = []
     ship_sizes = [5, 3, 3, 2, 2, 2, 1, 1, 1, 1]     
     for size in ship_sizes:
@@ -62,71 +71,104 @@ def player_selection(grid_size = 10):
                     continue
                 ship = Ship(size, start_x, start_y, direction)
                 if ship.valid_position(coordinates, grid_size):
+                    ships.append(ship)
                     coordinates.extend(ship.positions)
-                    create_grid(coordinates, True)
                     break
                 else:
                     print("Invalid ship placement. Try again.")
             except ValueError:
                 print("Position outside if the grid. Please enter values between 0 and 9!")
-    return create_grid(coordinates, True)
+    player_grid = create_grid(coordinates, True)
+    return ships
 
 # computer selection
-from random import randrange
-def computer_selection():
+from random import randrange, choice
+def computer_selection(grid_size = 10):
+    ships = []
     coordinates = []
-    number_ships_max = 10
-    number_ships_used = 0
-    while number_ships_used <= number_ships_max:
-            selection_x = randrange(0,10)
-            selection_y = randrange(0,10)
-            selected_position = (selection_x, selection_y)
-            if selected_position not in coordinates:
-                coordinates.append((selection_x, selection_y))
-                number_ships_used += 1
-    return create_grid(coordinates, False)
+    ship_sizes = [5, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+    directions = ["horizontal", "vertical"]    
+    for size in ship_sizes:
+        while True:
+            try:
+                start_x = randrange(0,10)
+                start_y = randrange(0,10)
+                if size > 1:
+                    direction = choice(directions)
+                else: direction = "horizontal"
+                ship = Ship(size, start_x, start_y, direction)
+                if ship.valid_position(coordinates, grid_size):
+                    ships.append(ship)
+                    coordinates.extend(ship.positions)
+                    break
+            except IndexError:
+                print("Error: Generated position was out of bounds. Retrying...")
+    return ships
 
 # moving
-def moving(coordinates_opponent, move_x, move_y):
+def moving(ships, move_x, move_y):
     move_position = (move_x, move_y)
-    if move_position in coordinates_opponent:
-        coordinates_opponent.remove(move_position)
-        return True
-    elif move_position not in coordinates_opponent:
-        return False
+    for ship in ships:
+        if ship.hit(move_position):
+            if ship.sink():
+                print(f"Ship (size: {ship.size} destroyed!")
+                return "sunk"
+            else:
+                print(f"Ship (size: {ship.size} hit!")
+                return "hit"
+            return True
+    print("No ships hit.")
+    return "missed"
 
 # gaming part (main function)
-def gaming():
+def gaming(grid_size = 10):
+    coordinates = []
     number_ships_max = 10
-    number_ships_player = number_ships_max
-    number_ships_computer = number_ships_max
-    ships_positions_player = player_selection()
-    ships_positions_computer = computer_selection()
-    while number_ships_player or number_ships_computer > 0:
+    player_ships = player_selection(grid_size)
+    computer_ships = computer_selection(grid_size)
+    player_hits = 0
+    player_sunken = 0
+    computer_hits = 0
+    computer_sunken = 0
+    print("Game starts")
+    while len(player_ships) > 0 and len(computer_ships) > 0:
         try:
-            selection_x_player = int(input("Position x: (0-9): "))
-            selection_y_player = int(input("Position y: (0-9): "))
-            selected_position = (selection_x_player, selection_y_player)
-            if not valid_position(selected_position):
-                print("Position outside if the grid. Please enter values between 0 and 9!")
-            elif moving(ships_positions_computer, selection_x_player, selection_y_player) == True:
-                number_ships_computer -= 1
-                score_player = number_ships_max - number_ships_computer
-                print("Ship destroyed!")
-            else: print("You missed the ship.")
+            # player's turn
+            selection_x_player = int(input("Position x (0-9): "))
+            selection_y_player = int(input("Position y (0-9): "))
+            if not (0 <= selection_x_player < grid_size and 0 <= selection_y_player < grid_size):
+                print("Position outside the grid. Please enter values between 0 and 9!")
+                continue
+            result = moving(computer_ships, selection_x_player, selection_y_player)
+            if result == "hit":
+                player_hits += 1
+            elif result == "sunk":
+                player_hits += 1
+                player_sunken += 1
+                computer_ships = [ship for ship in computer_ships if not ship.sink()]
+            print(f"Player: Hits: {player_hits}, Sunken Ships: {player_sunken}")
+            if len(computer_ships) == 0:
+                break
+            # computer's turn
+            selection_x_computer = randrange(0, 10)
+            selection_y_computer = randrange(0, 10)
+            print(f"Computer attacks: ({selection_x_computer}, {selection_y_computer})")
+            result = moving(player_ships, selection_x_computer, selection_y_computer)
+            if result == "hit":
+                computer_hits += 1
+            elif result == "sunk":
+                computer_hits += 1
+                computer_sunken += 1
+                player_ships = [ship for ship in player_ships if not ship.sink()]
+            print(f"Computer: Hits: {computer_hits}, Sunken Ships: {computer_sunken}")
         except ValueError:
-            print("Please enter values between 0 and 9!")
-        selection_x_computer = randrange(0,10)
-        selection_y_computer = randrange(0,10)
-        if moving(ships_positions_player, selection_x_computer, selection_y_computer) == True:
-            number_ships_player -= 1
-            score_computer = number_ships_max - number_ships_player
-            print("The computer destroyed your ship!")
-        else: print("The computer missed your ship.")
-    if number_ships_player > number_ships_computer:
-        print(f"Game over!\nYou won!\nYour score: {score_player}\nComputer score: {score_computer}")
-    elif number_ships_player < number_ships_computer:
-        print(f"Game over!\nComputer won!\nYour score: {score_player}\nComputer score: {score_computer}")
-    else: print(f"\nYour score: {score_player}\nComputer score: {score_computer}")
-
+            print("Invalid input. Please enter numeric values between 0 and 9.")
+    if len(player_ships) > 0:
+        print("Game over!\nYou won!")
+    elif len(computer_ships) > 0:
+        print("Game over!\nComputer won!")
+    else: print("Draw!")
+    print("\nFinal scores:")
+    print(f"Player:\nhits: {player_hits}, sunken ships: {player_sunken}")
+    print(f"Computer:\nhits: {computer_hits}, sunken ships: {computer_sunken}")
 gaming()
