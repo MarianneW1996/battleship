@@ -49,7 +49,7 @@ def player_selection(grid_size = 10):
     for size in ship_sizes:
         while True:
             try:
-                print(f"Place your ship (size: {size}):")
+                print(f"\nPlace your ship (size: {size}):")
                 start_x = int(input("Starting Position x (0-9): "))
                 start_y = int(input("Starting Position y (0-9): "))
                 if size > 1:
@@ -65,6 +65,9 @@ def player_selection(grid_size = 10):
                     break
                 else:
                     print("Invalid ship placement. Make sure the ship fits within the grid and does not overlap with others.")
+                    grid_show_answer = input("Do you want to see your current grid (yes/no)? ") # if "no" or something else is entered, the code continues
+                    if grid_show_answer == "yes":
+                        create_grid(coordinates, True)
             except ValueError:
                 print("Position outside if the grid. Please enter values between 0 and 9!")
     create_grid(coordinates, True)
@@ -150,13 +153,15 @@ def gaming(grid_size = 10):
             # computer's turn
             if hit_previous_turn == True: # computer strategy for moving (strategy: take positions next to a hit)
                 targets =  [(x + dx, y + dy) for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)] if 0 <= x + dx < 10 and 0 <= y + dy < 10]
-                selection_x_computer, selection_x_computer = choice(targets)
+                selection_x_computer, selection_y_computer = choice(targets)
             else:
                 selection_x_computer = randrange(0, 10)
                 selection_y_computer = randrange(0, 10)
             selection_computer = (selection_x_computer, selection_y_computer)
-            if selection_computer in coordinates_already_used_computer:
-                continue
+            while selection_computer in coordinates_already_used_computer: # check whether the coordinates have already been used
+                selection_x_computer = randrange(0, 10)
+                selection_y_computer = randrange(0, 10)
+                selection_computer = (selection_x_computer, selection_y_computer)
             coordinates_already_used_computer.append(selection_computer)
             print(f"\nComputer's attack: ({selection_x_computer}, {selection_y_computer})")
             result = moving(player_ships, selection_x_computer, selection_y_computer)
