@@ -1,21 +1,9 @@
-example_grid = ([(0,0),(4,5),(6,2),(9,4)])
-
-### Ships are no longer only single spaces, but create 1x five
-### space big ships, 2x three space big ships, and 3x two space ones. If a player or
-### computer hits a ship, tell them the size of their target.
-
-# ships:
-# 1x five spaces
-# 2x three spaces
-# 3x two spaces
-# 4x one space
-
 # create a grid
 def create_grid(coordinates: list, print_grid):
     grid = [["." for x in range(10)] for y in range(10)]
     for x, y in coordinates:
-        grid[x][y] = 'X'
-    if print_grid == True:
+        grid[y][x] = 'X' # changed the coordinates from x,y to y,x because the first character is vertical and the second is horizontal, but we are used to it the other way round
+    if print_grid == True: # boolean values to specify in the further code whether the grid should also be printed
         for row in grid:
             print("".join(row))
     return grid
@@ -27,21 +15,21 @@ class Ship:
         self.start_x = start_x
         self.start_y = start_y
         self.direction = direction
-        self.positions = self.calculate_position()
+        self.positions = self.calculate_position() # for calculating the position of ships larger than 1
         self.hits = []
     def calculate_position(self):
         positions = []
         for i in range(self.size):
             if self.direction == 'horizontal':
-                positions.append((self.start_x, self.start_y + i))
-            elif self.direction == 'vertical':
                 positions.append((self.start_x + i, self.start_y))
+            elif self.direction == 'vertical':
+                positions.append((self.start_x, self.start_y + i))
         return positions
     def valid_position(self, coordinates, grid_size=10):
         for x, y in self.positions:
-            if not (0 <= x < grid_size and 0 <= y < grid_size):
+            if not (0 <= x < grid_size and 0 <= y < grid_size): # check if the coordinates are in the grid
                 return False
-            if (x, y) in coordinates:
+            if (x, y) in coordinates: # check if the coordinates are already being used by another ship
                 return False
         return True
     def hit(self, position):
@@ -50,7 +38,7 @@ class Ship:
             return True
         return False
     def sink(self):
-        return len(self.hits) == len(self.positions)
+        return len(self.hits) == len(self.positions) # returns True if the statement is correct and False if it is not correct
         
 # player selection
 def player_selection(grid_size = 10):
@@ -65,7 +53,7 @@ def player_selection(grid_size = 10):
                 start_y = int(input("Starting Position y (0-9): "))
                 if size > 1:
                     direction = input("Enter a direction for the ship (horizontal/vertical): ")
-                else: direction = "horizontal"
+                else: direction = "horizontal" # for one-dimensional ships, the direction is irrelevant
                 if direction not in ["horizontal", "vertical"]:
                     print("Invalid direction. Please enter 'horizontal' or 'vertical'.")
                     continue
@@ -111,30 +99,27 @@ def moving(ships, move_x, move_y):
     for ship in ships:
         if ship.hit(move_position):
             if ship.sink():
-                print(f"Ship (size: {ship.size} destroyed!")
+                print(f"Ship (size: {ship.size}) destroyed!")
                 return "sunk"
             else:
-                print(f"Ship (size: {ship.size} hit!")
+                print(f"Ship (size: {ship.size}) hit!")
                 return "hit"
-            return True
     print("No ships hit.")
     return "missed"
 
 # gaming part (main function)
 def gaming(grid_size = 10):
-    coordinates = []
-    number_ships_max = 10
     player_ships = player_selection(grid_size)
     computer_ships = computer_selection(grid_size)
-    player_hits = 0
-    player_sunken = 0
+    player_hits = 0 # ships of the computer hit by the player
+    player_sunken = 0 # ships of the computer sunk by the player
     computer_hits = 0
     computer_sunken = 0
-    print("Game starts")
+    print("\nGame starts...")
     while len(player_ships) > 0 and len(computer_ships) > 0:
         try:
             # player's turn
-            selection_x_player = int(input("Position x (0-9): "))
+            selection_x_player = int(input("\nTry to hit the opponent's ship!\nPosition x (0-9): "))
             selection_y_player = int(input("Position y (0-9): "))
             if not (0 <= selection_x_player < grid_size and 0 <= selection_y_player < grid_size):
                 print("Position outside the grid. Please enter values between 0 and 9!")
@@ -146,13 +131,12 @@ def gaming(grid_size = 10):
                 player_hits += 1
                 player_sunken += 1
                 computer_ships = [ship for ship in computer_ships if not ship.sink()]
-            print(f"Player: Hits: {player_hits}, Sunken Ships: {player_sunken}")
             if len(computer_ships) == 0:
                 break
             # computer's turn
             selection_x_computer = randrange(0, 10)
             selection_y_computer = randrange(0, 10)
-            print(f"Computer attacks: ({selection_x_computer}, {selection_y_computer})")
+            print(f"\nComputer attacks: ({selection_x_computer}, {selection_y_computer})")
             result = moving(player_ships, selection_x_computer, selection_y_computer)
             if result == "hit":
                 computer_hits += 1
@@ -160,7 +144,7 @@ def gaming(grid_size = 10):
                 computer_hits += 1
                 computer_sunken += 1
                 player_ships = [ship for ship in player_ships if not ship.sink()]
-            print(f"Computer: Hits: {computer_hits}, Sunken Ships: {computer_sunken}")
+            print(f"\nYour ships: hits: {computer_hits}, sunken: {computer_sunken}\nShips of computer: hits: {player_hits}, sunken: {player_sunken}")
         except ValueError:
             print("Invalid input. Please enter numeric values between 0 and 9.")
     if len(player_ships) > 0:
@@ -169,6 +153,6 @@ def gaming(grid_size = 10):
         print("Game over!\nComputer won!")
     else: print("Draw!")
     print("\nFinal scores:")
-    print(f"Player:\nhits: {player_hits}, sunken ships: {player_sunken}")
-    print(f"Computer:\nhits: {computer_hits}, sunken ships: {computer_sunken}")
+    print(f"Ships of player:\nhits: {player_hits}, sunken ships: {player_sunken}")
+    print(f"Ships of computer:\nhits: {computer_hits}, sunken ships: {computer_sunken}")
 gaming()
